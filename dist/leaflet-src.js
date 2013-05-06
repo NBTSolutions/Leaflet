@@ -3498,13 +3498,24 @@ L.Popup = L.Class.extend({
 
 		var wrapper = this._wrapper =
 		        L.DomUtil.create('div', prefix + '-content-wrapper', container);
-		L.DomEvent.disableClickPropagation(wrapper);
 
 		this._contentNode = L.DomUtil.create('div', prefix + '-content', wrapper);
 		L.DomEvent.on(this._contentNode, 'mousewheel', L.DomEvent.stopPropagation);
 
 		this._tipContainer = L.DomUtil.create('div', prefix + '-tip-container', container);
 		this._tip = L.DomUtil.create('div', prefix + '-tip', this._tipContainer);
+
+        // enyo-fix: catch and release enyo "ontap" event. Continue to block all others.
+        L.DomEvent.on(wrapper, 'click', function (e) {
+            // detect if Popup container is an enyo Component
+            if (window.enyo && window.enyo.$ && e.srcElement && e.srcElement.id
+                && window.enyo.$[e.srcElement.id]) {
+                window.enyo.$[e.srcElement.id].bubble("ontap", e);
+            }
+            e.stopPropagation();
+        });
+        // enyo-fix: block double click events explicitly
+        L.DomEvent.on(wrapper, 'dblclick', L.DomEvent.stopPropagation);
 	},
 
 	_update: function () {
