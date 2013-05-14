@@ -3516,6 +3516,7 @@ L.Popup = L.Class.extend({
         });
         // enyo-fix: block double click events explicitly
         L.DomEvent.on(wrapper, 'dblclick', L.DomEvent.stopPropagation);
+        L.DomEvent.on(wrapper, 'mousedown', L.DomEvent.stopPropagation);
 	},
 
 	_update: function () {
