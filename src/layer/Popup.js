@@ -151,8 +151,30 @@ L.Popup = L.Class.extend({
 		        L.DomUtil.create('div', prefix + '-content-wrapper', container);
 		L.DomEvent.disableClickPropagation(wrapper);
 
+        // XXX begin enyo-fix
+        var handleEnyoEvent = function(e) {
+            var enyoEvent = enyo.clone(e);
+            L.DomEvent.stopPropagation(e);
+
+            if (!enyoEvent) return;
+
+            if (enyoEvent.type == "click") {
+                enyoEvent.clientX = 0;
+                enyoEvent.clientY = 0;
+            }
+            enyo.dispatch(enyoEvent);
+        };
+
+        // enyo-fix: catch and release click and scroll events. Continue to block all others.
+        L.DomEvent.on(wrapper, 'click', handleEnyoEvent);
+		L.DomEvent.on(wrapper, 'mousewheel', handleEnyoEvent);
+		L.DomEvent.on(wrapper, 'MozMousePixelScroll', handleEnyoEvent);
+
+        // enyo-fix: block double click events explicitly
+        L.DomEvent.on(wrapper, 'dblclick', L.DomEvent.stopPropagation);
+        L.DomEvent.on(wrapper, 'mousedown', L.DomEvent.stopPropagation);
+
 		this._contentNode = L.DomUtil.create('div', prefix + '-content', wrapper);
-		L.DomEvent.on(this._contentNode, 'mousewheel', L.DomEvent.stopPropagation);
 		L.DomEvent.on(wrapper, 'contextmenu', L.DomEvent.stopPropagation);
 		this._tipContainer = L.DomUtil.create('div', prefix + '-tip-container', container);
 		this._tip = L.DomUtil.create('div', prefix + '-tip', this._tipContainer);
