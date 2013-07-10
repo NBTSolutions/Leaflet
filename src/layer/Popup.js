@@ -152,17 +152,19 @@ L.Popup = L.Class.extend({
 		L.DomEvent.disableClickPropagation(wrapper);
 
         // XXX begin enyo-fix
-        var handleEnyoEvent = function(e) {
-            var enyoEvent = enyo.clone(e);
+        var handleEnyoEvent = function (e) {
+            var enyoEvent = window.enyo.clone(e);
             L.DomEvent.stopPropagation(e);
 
-            if (!enyoEvent) return;
+            if (!enyoEvent) {
+                return;
+            }
 
-            if (enyoEvent.type == "click") {
+            if (enyoEvent.type === 'click') {
                 enyoEvent.clientX = 0;
                 enyoEvent.clientY = 0;
             }
-            enyo.dispatch(enyoEvent);
+            window.enyo.dispatch(enyoEvent);
         };
 
         // enyo-fix: catch and release click and scroll events. Continue to block all others.
