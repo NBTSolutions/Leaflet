@@ -187,9 +187,8 @@ L.Popup = L.Class.extend({
         // enyo-fix: catch and release enyo "ontap" event. Continue to block all others.
         L.DomEvent.on(wrapper, 'click', function (e) {
             // detect if Popup container is an enyo Component
-            if (window.enyo && window.enyo.$ && e.srcElement && e.srcElement.id
-                && window.enyo.$[e.srcElement.id]) {
-                window.enyo.$[e.srcElement.id].bubble("ontap", e);
+            if (window.enyo && window.enyo.$ && e.srcElement && e.srcElement.id && window.enyo.$[e.srcElement.id]) {
+                window.enyo.$[e.srcElement.id].bubble('ontap', e);
             }
             e.stopPropagation();
         });
