@@ -228,7 +228,7 @@ L.TileLayer = L.Class.extend({
 			this._updateZIndex();
 
 			if (this._animated) {
-				var className = 'leaflet-tile-container leaflet-zoom-animated';
+				var className = 'leaflet-tile-container';
 
 				this._bgBuffer = L.DomUtil.create('div', className, this._container);
 				this._tileContainer = L.DomUtil.create('div', className, this._container);
@@ -268,7 +268,7 @@ L.TileLayer = L.Class.extend({
 
 	_getTileSize: function () {
 		var map = this._map,
-		    zoom = map.getZoom(),
+		    zoom = map.getZoom() + this.options.zoomOffset,
 		    zoomN = this.options.maxNativeZoom,
 		    tileSize = this.options.tileSize;
 
@@ -355,8 +355,8 @@ L.TileLayer = L.Class.extend({
 			var limit = this._getWrapTileNum();
 
 			// don't load if exceeds world bounds
-			if ((options.noWrap && (tilePoint.x < 0 || tilePoint.x >= limit)) ||
-				tilePoint.y < 0 || tilePoint.y >= limit) { return false; }
+			if ((options.noWrap && (tilePoint.x < 0 || tilePoint.x >= limit.x)) ||
+				tilePoint.y < 0 || tilePoint.y >= limit.y) { return false; }
 		}
 
 		if (options.bounds) {
@@ -473,8 +473,9 @@ L.TileLayer = L.Class.extend({
 	},
 
 	_getWrapTileNum: function () {
-		// TODO refactor, limit is not valid for non-standard projections
-		return Math.pow(2, this._getZoomForUrl());
+		var crs = this._map.options.crs,
+		    size = crs.getSize(this._map.getZoom());
+		return size.divideBy(this.options.tileSize);
 	},
 
 	_adjustTilePoint: function (tilePoint) {
@@ -483,11 +484,11 @@ L.TileLayer = L.Class.extend({
 
 		// wrap tile coordinates
 		if (!this.options.continuousWorld && !this.options.noWrap) {
-			tilePoint.x = ((tilePoint.x % limit) + limit) % limit;
+			tilePoint.x = ((tilePoint.x % limit.x) + limit.x) % limit.x;
 		}
 
 		if (this.options.tms) {
-			tilePoint.y = limit - tilePoint.y - 1;
+			tilePoint.y = limit.y - tilePoint.y - 1;
 		}
 
 		tilePoint.z = this._getZoomForUrl();
@@ -520,6 +521,11 @@ L.TileLayer = L.Class.extend({
 		if (L.Browser.ielt9 && this.options.opacity !== undefined) {
 			L.DomUtil.setOpacity(tile, this.options.opacity);
 		}
+		// without this hack, tiles disappear after zoom on Chrome for Android
+		// https://github.com/Leaflet/Leaflet/issues/2078
+		if (L.Browser.mobileWebkit3d) {
+			tile.style.WebkitBackfaceVisibility = 'hidden';
+		}
 		return tile;
 	},
 
@@ -530,10 +536,20 @@ L.TileLayer = L.Class.extend({
 
 		this._adjustTilePoint(tilePoint);
 		tile.src     = this.getTileUrl(tilePoint);
+
+		this.fire('tileloadstart', {
+			tile: tile,
+			url: tile.src
+		});
 	},
 
 	_tileLoaded: function () {
 		this._tilesToLoad--;
+
+		if (this._animated) {
+			L.DomUtil.addClass(this._tileContainer, 'leaflet-zoom-animated');
+		}
+
 		if (!this._tilesToLoad) {
 			this.fire('load');
 
